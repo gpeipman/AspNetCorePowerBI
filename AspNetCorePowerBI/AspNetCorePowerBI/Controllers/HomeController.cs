@@ -27,6 +27,11 @@ namespace AspNetCorePowerBI.Controllers
             return View();
         }
 
+        public IActionResult IFrame()
+        {
+            return View();
+        }
+
         public async Task<IActionResult> CsJs([FromServices]PowerBISettings powerBISettings)
         {
             var result = new PowerBIEmbedConfig { Username = powerBISettings.UserName };
