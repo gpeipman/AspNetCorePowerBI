@@ -4,16 +4,15 @@ using IdentityModel;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 
-namespace AspNetCorePowerBI.Extensions
+namespace Microsoft.Extensions.DependencyInjection
 {
     public static class IServiceCollectionExtensions
     {
 
-        public static IServiceCollection AddAuthentication(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddPowerBiAuthentication(this IServiceCollection services, IConfiguration configuration)
         {
             IdentityModelEventSource.ShowPII = true;
             services.Configure<AzureAdSettings>(configuration.GetSection(ConfigurationConsts.CONFIGURATION_AUTHENTICATION));
@@ -35,9 +34,11 @@ namespace AspNetCorePowerBI.Extensions
                 options.SaveTokens = true;
                 options.RequireHttpsMetadata = false;
                 options.Scope.Add(OidcConstants.StandardScopes.OfflineAccess);
-                options.Scope.Add(azureadoptions.ResourceUrl);
+                foreach (var scope in azureadoptions.Scopes)
+                    options.Scope.Add(scope);
             })
-                .AddCookie();
+            .AddCookie();
+
             return services;
         }
 

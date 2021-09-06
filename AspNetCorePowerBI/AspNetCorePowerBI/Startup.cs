@@ -23,6 +23,8 @@ namespace AspNetCorePowerBI
 
             var powerBISettings = Configuration.GetSection(ConfigurationConsts.CONFIGURATION_POWERBI).Get<PowerBISettings>();
             services.AddSingleton(powerBISettings);
+
+            services.AddPowerBiAuthentication(Configuration);
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -40,8 +42,8 @@ namespace AspNetCorePowerBI
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseRouting();
-            app.UseAuthorization();
-
+            app.UseAuthentication()
+               .UseAuthorization();
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllerRoute(

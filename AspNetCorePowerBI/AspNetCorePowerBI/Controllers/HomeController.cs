@@ -1,4 +1,5 @@
-﻿using AspNetCorePowerBI.Models;
+﻿using AspNetCorePowerBI.Consts;
+using AspNetCorePowerBI.Models;
 using AspNetCorePowerBI.Settings;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
@@ -10,7 +11,6 @@ using Microsoft.PowerBI.Api.Models;
 using Microsoft.Rest;
 using System;
 using System.Diagnostics;
-using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace AspNetCorePowerBI.Controllers
@@ -37,7 +37,7 @@ namespace AspNetCorePowerBI.Controllers
         [Authorize]
         public async Task<IActionResult> CsJs([FromServices]PowerBISettings powerBISettings)
         {
-            var result = new PowerBIEmbedConfig { Username = this.HttpContext.User.Identity.Name ?? this.HttpContext.User.FindFirst(ClaimTypes.Email)?.Value};
+            var result = new PowerBIEmbedConfig { Username = this.HttpContext.User.Identity.Name ?? this.HttpContext.User.FindFirst(ClaimTypes.Preferred_Username)?.Value};
             var accessToken = await this.HttpContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken);
 
             var tokenCredentials = new TokenCredentials(accessToken, "Bearer");
@@ -46,6 +46,7 @@ namespace AspNetCorePowerBI.Controllers
             {
                 var groupId = powerBISettings.GroupId;
                 var reportId = powerBISettings.ReportId;
+
                 var report = await client.Reports.GetReportInGroupAsync(groupId, reportId);
                 var generateTokenRequestParameters = new GenerateTokenRequest(accessLevel: "view");
                 var tokenResponse = await client.Reports.GenerateTokenAsync(groupId, reportId, generateTokenRequestParameters);
