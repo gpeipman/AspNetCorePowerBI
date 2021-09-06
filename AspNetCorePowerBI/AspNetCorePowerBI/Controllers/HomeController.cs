@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 using AspNetCorePowerBI.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using Microsoft.PowerBI.Api.V2;
-using Microsoft.PowerBI.Api.V2.Models;
+using Microsoft.PowerBI.Api;
+using Microsoft.PowerBI.Api.Models;
 using Microsoft.Rest;
 using Newtonsoft.Json.Linq;
 
@@ -40,11 +40,11 @@ namespace AspNetCorePowerBI.Controllers
 
             using (var client = new PowerBIClient(new Uri(powerBISettings.ApiUrl), tokenCredentials))
             {
-                var workspaceId = powerBISettings.WorkspaceId.ToString();
-                var reportId = powerBISettings.ReportId.ToString();
-                var report = await client.Reports.GetReportInGroupAsync(workspaceId, reportId);
+                var groupId = powerBISettings.GroupId;
+                var reportId = powerBISettings.ReportId;
+                var report = await client.Reports.GetReportInGroupAsync(groupId, reportId);
                 var generateTokenRequestParameters = new GenerateTokenRequest(accessLevel: "view");
-                var tokenResponse = await client.Reports.GenerateTokenAsync(workspaceId, reportId, generateTokenRequestParameters);
+                var tokenResponse = await client.Reports.GenerateTokenAsync(groupId, reportId, generateTokenRequestParameters);
 
                 result.EmbedToken = tokenResponse;
                 result.EmbedUrl = report.EmbedUrl;
