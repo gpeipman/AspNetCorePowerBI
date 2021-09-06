@@ -1,15 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Net.Http;
-using System.Threading.Tasks;
-using AspNetCorePowerBI.Models;
+﻿using AspNetCorePowerBI.Models;
+using AspNetCorePowerBI.Settings;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.PowerBI.Api;
 using Microsoft.PowerBI.Api.Models;
 using Microsoft.Rest;
-using Newtonsoft.Json.Linq;
+using System;
+using System.Diagnostics;
+using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace AspNetCorePowerBI.Controllers
 {
@@ -32,10 +34,12 @@ namespace AspNetCorePowerBI.Controllers
             return View();
         }
 
+        [Authorize]
         public async Task<IActionResult> CsJs([FromServices]PowerBISettings powerBISettings)
         {
-            var result = new PowerBIEmbedConfig { Username = powerBISettings.UserName };
-            var accessToken = await GetPowerBIAccessToken(powerBISettings);
+            var result = new PowerBIEmbedConfig { Username = this.HttpContext.User.Identity.Name ?? this.HttpContext.User.FindFirst(ClaimTypes.Email)?.Value};
+            var accessToken = await this.HttpContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken);
+
             var tokenCredentials = new TokenCredentials(accessToken, "Bearer");
 
             using (var client = new PowerBIClient(new Uri(powerBISettings.ApiUrl), tokenCredentials))
@@ -54,37 +58,6 @@ namespace AspNetCorePowerBI.Controllers
             return View(result);
         }
 
-        private async Task<string> GetPowerBIAccessToken(PowerBISettings powerBISettings)
-        {
-            using (var client = new HttpClient())
-            {
-                var form = new Dictionary<string, string>();
-                form["grant_type"] = "password";
-                form["resource"] = powerBISettings.ResourceUrl;
-                form["username"] = powerBISettings.UserName;
-                form["password"] = powerBISettings.Password;
-                form["client_id"] = powerBISettings.ApplicationId.ToString();
-                form["client_secret"] = powerBISettings.ApplicationSecret;
-                form["scope"] = "openid";
-
-                client.DefaultRequestHeaders.TryAddWithoutValidation("Content-Type", "application/x-www-form-urlencoded");
-
-                using (var formContent = new FormUrlEncodedContent(form))
-                using (var response = await client.PostAsync(powerBISettings.AuthorityUrl, formContent))
-                {
-                    var body = await response.Content.ReadAsStringAsync();
-                    var jsonBody = JObject.Parse(body);
-
-                    var errorToken = jsonBody.SelectToken("error");
-                    if (errorToken != null)
-                    {
-                        throw new Exception(errorToken.Value<string>());
-                    }
-
-                    return jsonBody.SelectToken("access_token").Value<string>();
-                }
-            }
-        }
 
         public IActionResult Privacy()
         {
