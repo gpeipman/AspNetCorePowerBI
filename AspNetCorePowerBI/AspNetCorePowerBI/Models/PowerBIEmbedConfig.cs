@@ -1,19 +1,19 @@
 ﻿using System;
-using Microsoft.PowerBI.Api.V2.Models;
 
 namespace AspNetCorePowerBI.Models
 {
     public class PowerBIEmbedConfig
     {
-        public string Id { get; set; }
+        public Guid Id { get; set; }
         public string EmbedUrl { get; set; }
-        public EmbedToken EmbedToken { get; set; }
+        public string Token { get; set; }
+        public DateTime Expiration { get; set;  }
 
         public int MinutesToExpiration
         {
             get
             {
-                var minutesToExpiration = EmbedToken.Expiration.Value - DateTime.UtcNow;
+                var minutesToExpiration = Expiration - DateTime.UtcNow;
                 return minutesToExpiration.Minutes;
             }
         }
