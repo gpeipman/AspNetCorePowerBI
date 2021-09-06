@@ -1,6 +1,5 @@
 ﻿using AspNetCorePowerBI.Consts;
 using AspNetCorePowerBI.Settings;
-using IdentityModel;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Extensions.Configuration;
@@ -33,7 +32,6 @@ namespace Microsoft.Extensions.DependencyInjection
                 options.ResponseType = OpenIdConnectResponseType.CodeIdToken;
                 options.SaveTokens = true;
                 options.RequireHttpsMetadata = false;
-                options.Scope.Add(OidcConstants.StandardScopes.OfflineAccess);
                 foreach (var scope in azureadoptions.Scopes)
                     options.Scope.Add(scope);
             })

@@ -17,7 +17,7 @@
 @section scripts {
     <script>
     // Read embed application token from Model
-    var accessToken = "@Model.EmbedToken.Token";
+    var accessToken = "@Model.Token";
 
     // Read embed URL from Model
     var embedUrl = "@Html.Raw(Model.EmbedUrl)";
@@ -34,7 +34,7 @@
     // You can find more information at https://github.com/Microsoft/PowerBI-JavaScript/wiki/Embed-Configuration-Details.
     var config = {
         type: 'report',
-        tokenType: models.TokenType.Embed,
+        tokenType: models.TokenType.Aad,
         accessToken: accessToken,
         embedUrl: embedUrl,
         id: embedReportId,

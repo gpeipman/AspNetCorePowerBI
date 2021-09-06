@@ -7,7 +7,7 @@ namespace AspNetCorePowerBI.Settings
         public Guid ApplicationId { get; set; }
         public string ApplicationSecret { get; set; }
         public string AuthorityUrl { get; set; }
-        public string CallbackPath {  get; set; }
+        public string CallbackPath {  get; set; }   
         public string[] Scopes { get; set; }
     }
 }

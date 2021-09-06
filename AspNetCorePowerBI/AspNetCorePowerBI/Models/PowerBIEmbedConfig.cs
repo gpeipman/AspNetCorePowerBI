@@ -1,5 +1,4 @@
 ﻿using System;
-using Microsoft.PowerBI.Api.Models;
 
 namespace AspNetCorePowerBI.Models
 {
@@ -7,13 +6,14 @@ namespace AspNetCorePowerBI.Models
     {
         public Guid Id { get; set; }
         public string EmbedUrl { get; set; }
-        public EmbedToken EmbedToken { get; set; }
+        public string Token { get; set; }
+        public DateTime Expiration { get; set;  }
 
         public int MinutesToExpiration
         {
             get
             {
-                var minutesToExpiration = EmbedToken.Expiration - DateTime.UtcNow;
+                var minutesToExpiration = Expiration - DateTime.UtcNow;
                 return minutesToExpiration.Minutes;
             }
         }
