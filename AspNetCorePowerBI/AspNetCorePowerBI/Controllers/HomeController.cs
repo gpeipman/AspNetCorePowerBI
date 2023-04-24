@@ -21,13 +21,8 @@ public class HomeController : Controller
     {
         _logger = logger;
     }
-
-    public IActionResult Index()
-    {
-        return View();
-    }
-
-    public async Task<IActionResult> CsJs([FromServices] PowerBISettings powerBISettings)
+    
+    public async Task<IActionResult> Index([FromServices] PowerBISettings powerBISettings)
     {
         var result = new PowerBIEmbedConfig { Username = powerBISettings.UserName };
         var accessToken = await GetPowerBIAccessToken(powerBISettings);
