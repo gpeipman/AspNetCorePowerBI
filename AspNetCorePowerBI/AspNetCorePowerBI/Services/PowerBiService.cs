@@ -8,7 +8,7 @@ using Microsoft.PowerBI.Api;
 using Microsoft.Rest;
 using Newtonsoft.Json.Linq;
 
-namespace AspNetCorePowerBI;
+namespace AspNetCorePowerBI.Services;
 
 public class PowerBiService
 {
@@ -31,7 +31,7 @@ public class PowerBiService
         var report = await client.Reports.GetReportInGroupAsync(workspaceId, reportId);
         var generateTokenRequestParameters = new GenerateTokenRequest("view");
         var tokenResponse = await client.Reports.GenerateTokenAsync(workspaceId, reportId, generateTokenRequestParameters);
-        
+
         var result = new PowerBIEmbedConfig
         {
             Username = _settings.UserName,

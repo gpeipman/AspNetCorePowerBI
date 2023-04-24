@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Threading.Tasks;
 using AspNetCorePowerBI.Models;
+using AspNetCorePowerBI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -9,15 +10,16 @@ namespace AspNetCorePowerBI.Controllers;
 public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
-
-    public HomeController(ILogger<HomeController> logger)
+    private readonly PowerBiService _service;
+    public HomeController(ILogger<HomeController> logger, PowerBiService service)
     {
         _logger = logger;
+        _service = service;
     }
 
-    public async Task<IActionResult> Index([FromServices] PowerBISettings powerBISettings)
+    public async Task<IActionResult> Index()
     {
-        var result = await new PowerBiService(powerBISettings).GetPowerBiEmbedConfig();
+        var result = await _service.GetPowerBiEmbedConfig();
 
         return View(result);
     }

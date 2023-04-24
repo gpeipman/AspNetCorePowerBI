@@ -1,4 +1,5 @@
 using AspNetCorePowerBI.Models;
+using AspNetCorePowerBI.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -34,7 +35,10 @@ public class Startup
                 .GetSection("PowerBI")
                 .Get<PowerBISettings>()
             ;
-        services.AddSingleton(powerBISettings);
+
+        var powerBiService = new PowerBiService(powerBISettings);
+
+        services.AddSingleton(powerBiService);
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
