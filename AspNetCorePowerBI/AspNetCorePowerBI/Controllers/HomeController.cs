@@ -6,95 +6,95 @@ using System.Threading.Tasks;
 using AspNetCorePowerBI.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using Microsoft.PowerBI.Api.V2;
-using Microsoft.PowerBI.Api.V2.Models;
+using Microsoft.PowerBI.Api;
+using Microsoft.PowerBI.Api.Models;
 using Microsoft.Rest;
 using Newtonsoft.Json.Linq;
 
-namespace AspNetCorePowerBI.Controllers
+namespace AspNetCorePowerBI.Controllers;
+
+public class HomeController : Controller
 {
-    public class HomeController : Controller
+    private readonly ILogger<HomeController> _logger;
+
+    public HomeController(ILogger<HomeController> logger)
     {
-        private readonly ILogger<HomeController> _logger;
+        _logger = logger;
+    }
 
-        public HomeController(ILogger<HomeController> logger)
+    public IActionResult Index()
+    {
+        return View();
+    }
+
+    public IActionResult IFrame()
+    {
+        return View();
+    }
+
+    public async Task<IActionResult> CsJs([FromServices] PowerBISettings powerBISettings)
+    {
+        var result = new PowerBIEmbedConfig { Username = powerBISettings.UserName };
+        var accessToken = await GetPowerBIAccessToken(powerBISettings);
+        var tokenCredentials = new TokenCredentials(accessToken, "Bearer");
+
+        using (var client = new PowerBIClient(new Uri(powerBISettings.ApiUrl), tokenCredentials))
         {
-            _logger = logger;
+            var workspaceId = powerBISettings.WorkspaceId;
+            var reportId = powerBISettings.ReportId;
+            var report = await client.Reports.GetReportInGroupAsync(workspaceId, reportId);
+            var generateTokenRequestParameters = new GenerateTokenRequest("view");
+            var tokenResponse = await client.Reports.GenerateTokenAsync(workspaceId, reportId, generateTokenRequestParameters);
+
+            result.EmbedToken = tokenResponse;
+            result.EmbedUrl = report.EmbedUrl;
+            result.Id = report.Id;
         }
 
-        public IActionResult Index()
-        {
-            return View();
-        }
+        return View(result);
+    }
 
-        public IActionResult IFrame()
+    private async Task<string> GetPowerBIAccessToken(PowerBISettings powerBISettings)
+    {
+        using (var client = new HttpClient())
         {
-            return View();
-        }
+            var form = new Dictionary<string, string>();
+            form["grant_type"] = "password";
+            form["resource"] = powerBISettings.ResourceUrl;
+            form["username"] = powerBISettings.UserName;
+            form["password"] = powerBISettings.Password;
+            form["client_id"] = powerBISettings.ApplicationId.ToString();
+            form["client_secret"] = powerBISettings.ApplicationSecret;
+            form["scope"] = "openid";
 
-        public async Task<IActionResult> CsJs([FromServices]PowerBISettings powerBISettings)
-        {
-            var result = new PowerBIEmbedConfig { Username = powerBISettings.UserName };
-            var accessToken = await GetPowerBIAccessToken(powerBISettings);
-            var tokenCredentials = new TokenCredentials(accessToken, "Bearer");
+            client.DefaultRequestHeaders.TryAddWithoutValidation("Content-Type", "application/x-www-form-urlencoded");
 
-            using (var client = new PowerBIClient(new Uri(powerBISettings.ApiUrl), tokenCredentials))
+            using (var formContent = new FormUrlEncodedContent(form))
+            using (var response = await client.PostAsync(powerBISettings.AuthorityUrl, formContent))
             {
-                var workspaceId = powerBISettings.WorkspaceId.ToString();
-                var reportId = powerBISettings.ReportId.ToString();
-                var report = await client.Reports.GetReportInGroupAsync(workspaceId, reportId);
-                var generateTokenRequestParameters = new GenerateTokenRequest(accessLevel: "view");
-                var tokenResponse = await client.Reports.GenerateTokenAsync(workspaceId, reportId, generateTokenRequestParameters);
+                var body = await response.Content.ReadAsStringAsync();
+                var jsonBody = JObject.Parse(body);
 
-                result.EmbedToken = tokenResponse;
-                result.EmbedUrl = report.EmbedUrl;
-                result.Id = report.Id;
-            }
+                var errorToken = jsonBody.SelectToken("error");
 
-            return View(result);
-        }
-
-        private async Task<string> GetPowerBIAccessToken(PowerBISettings powerBISettings)
-        {
-            using (var client = new HttpClient())
-            {
-                var form = new Dictionary<string, string>();
-                form["grant_type"] = "password";
-                form["resource"] = powerBISettings.ResourceUrl;
-                form["username"] = powerBISettings.UserName;
-                form["password"] = powerBISettings.Password;
-                form["client_id"] = powerBISettings.ApplicationId.ToString();
-                form["client_secret"] = powerBISettings.ApplicationSecret;
-                form["scope"] = "openid";
-
-                client.DefaultRequestHeaders.TryAddWithoutValidation("Content-Type", "application/x-www-form-urlencoded");
-
-                using (var formContent = new FormUrlEncodedContent(form))
-                using (var response = await client.PostAsync(powerBISettings.AuthorityUrl, formContent))
+                if (errorToken != null)
                 {
-                    var body = await response.Content.ReadAsStringAsync();
-                    var jsonBody = JObject.Parse(body);
-
-                    var errorToken = jsonBody.SelectToken("error");
-                    if (errorToken != null)
-                    {
-                        throw new Exception(errorToken.Value<string>());
-                    }
-
-                    return jsonBody.SelectToken("access_token").Value<string>();
+                    throw new Exception(errorToken.Value<string>());
                 }
+
+                return jsonBody.SelectToken("access_token").Value<string>();
             }
         }
+    }
 
-        public IActionResult Privacy()
-        {
-            return View();
-        }
+    public IActionResult Privacy()
+    {
+        return View();
+    }
 
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    public IActionResult Error()
+    {
+        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }
 }
