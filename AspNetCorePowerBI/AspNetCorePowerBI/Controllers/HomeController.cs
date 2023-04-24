@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Net.Http;
 using System.Threading.Tasks;
 using AspNetCorePowerBI.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -9,7 +7,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.PowerBI.Api;
 using Microsoft.PowerBI.Api.Models;
 using Microsoft.Rest;
-using Newtonsoft.Json.Linq;
 
 namespace AspNetCorePowerBI.Controllers;
 
@@ -25,7 +22,7 @@ public class HomeController : Controller
     public async Task<IActionResult> Index([FromServices] PowerBISettings powerBISettings)
     {
         var result = new PowerBIEmbedConfig { Username = powerBISettings.UserName };
-        var accessToken = await GetPowerBIAccessToken(powerBISettings);
+        var accessToken = await new PowerBiService().GetPowerBIAccessToken(powerBISettings);
         var tokenCredentials = new TokenCredentials(accessToken, "Bearer");
 
         using (var client = new PowerBIClient(new Uri(powerBISettings.ApiUrl), tokenCredentials))
@@ -42,40 +39,6 @@ public class HomeController : Controller
         }
 
         return View(result);
-    }
-
-    private async Task<string> GetPowerBIAccessToken(PowerBISettings powerBISettings)
-    {
-        using var client = new HttpClient();
-
-        var form = new Dictionary<string, string>
-        {
-            ["grant_type"] = "password",
-            ["resource"] = powerBISettings.ResourceUrl,
-            ["username"] = powerBISettings.UserName,
-            ["password"] = powerBISettings.Password,
-            ["client_id"] = powerBISettings.ApplicationId.ToString(),
-            ["client_secret"] = powerBISettings.ApplicationSecret,
-            ["scope"] = "openid"
-        };
-
-        client.DefaultRequestHeaders.TryAddWithoutValidation("Content-Type", "application/x-www-form-urlencoded");
-
-        using var formContent = new FormUrlEncodedContent(form);
-
-        using var response = await client.PostAsync(powerBISettings.AuthorityUrl, formContent);
-
-        var body = await response.Content.ReadAsStringAsync();
-        var jsonBody = JObject.Parse(body);
-
-        var errorToken = jsonBody.SelectToken("error");
-
-        if (errorToken != null)
-        {
-            throw new Exception(errorToken.Value<string>());
-        }
-
-        return jsonBody.SelectToken("access_token")?.Value<string>();
     }
 
 

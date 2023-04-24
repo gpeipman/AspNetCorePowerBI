@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace AspNetCorePowerBI;
+namespace AspNetCorePowerBI.Models;
 
 public class PowerBISettings
 {
