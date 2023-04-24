@@ -27,11 +27,6 @@ public class HomeController : Controller
         return View();
     }
 
-    public IActionResult IFrame()
-    {
-        return View();
-    }
-
     public async Task<IActionResult> CsJs([FromServices] PowerBISettings powerBISettings)
     {
         var result = new PowerBIEmbedConfig { Username = powerBISettings.UserName };
@@ -56,41 +51,39 @@ public class HomeController : Controller
 
     private async Task<string> GetPowerBIAccessToken(PowerBISettings powerBISettings)
     {
-        using (var client = new HttpClient())
+        using var client = new HttpClient();
+
+        var form = new Dictionary<string, string>
         {
-            var form = new Dictionary<string, string>();
-            form["grant_type"] = "password";
-            form["resource"] = powerBISettings.ResourceUrl;
-            form["username"] = powerBISettings.UserName;
-            form["password"] = powerBISettings.Password;
-            form["client_id"] = powerBISettings.ApplicationId.ToString();
-            form["client_secret"] = powerBISettings.ApplicationSecret;
-            form["scope"] = "openid";
+            ["grant_type"] = "password",
+            ["resource"] = powerBISettings.ResourceUrl,
+            ["username"] = powerBISettings.UserName,
+            ["password"] = powerBISettings.Password,
+            ["client_id"] = powerBISettings.ApplicationId.ToString(),
+            ["client_secret"] = powerBISettings.ApplicationSecret,
+            ["scope"] = "openid"
+        };
 
-            client.DefaultRequestHeaders.TryAddWithoutValidation("Content-Type", "application/x-www-form-urlencoded");
+        client.DefaultRequestHeaders.TryAddWithoutValidation("Content-Type", "application/x-www-form-urlencoded");
 
-            using (var formContent = new FormUrlEncodedContent(form))
-            using (var response = await client.PostAsync(powerBISettings.AuthorityUrl, formContent))
-            {
-                var body = await response.Content.ReadAsStringAsync();
-                var jsonBody = JObject.Parse(body);
+        using var formContent = new FormUrlEncodedContent(form);
 
-                var errorToken = jsonBody.SelectToken("error");
+        using var response = await client.PostAsync(powerBISettings.AuthorityUrl, formContent);
 
-                if (errorToken != null)
-                {
-                    throw new Exception(errorToken.Value<string>());
-                }
+        var body = await response.Content.ReadAsStringAsync();
+        var jsonBody = JObject.Parse(body);
 
-                return jsonBody.SelectToken("access_token").Value<string>();
-            }
+        var errorToken = jsonBody.SelectToken("error");
+
+        if (errorToken != null)
+        {
+            throw new Exception(errorToken.Value<string>());
         }
+
+        return jsonBody.SelectToken("access_token")?.Value<string>();
     }
 
-    public IActionResult Privacy()
-    {
-        return View();
-    }
+
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
