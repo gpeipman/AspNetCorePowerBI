@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.PowerBI.Api.Models;
 
-namespace AspNetCorePowerBI.Models;
+namespace AspNetCorePowerBI.Services;
 
 public class PowerBIEmbedConfig
 {
