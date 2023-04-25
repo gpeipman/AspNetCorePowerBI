@@ -19,7 +19,7 @@ public class HomeController : Controller
 
     public async Task<IActionResult> Index()
     {
-        var result = await _service.GetPowerBiEmbedConfig();
+        var result = await _service.GetConfig();
 
         return View(result);
     }

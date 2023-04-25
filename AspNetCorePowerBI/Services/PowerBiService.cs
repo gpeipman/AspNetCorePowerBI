@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
-using AspNetCorePowerBI.Models;
-using Microsoft.PowerBI.Api.Models;
 using Microsoft.PowerBI.Api;
+using Microsoft.PowerBI.Api.Models;
 using Microsoft.Rest;
 using Newtonsoft.Json.Linq;
 
@@ -12,16 +11,16 @@ namespace AspNetCorePowerBI.Services;
 
 public class PowerBiService
 {
+    private readonly PowerBISettings _settings;
+
     public PowerBiService(PowerBISettings settings)
     {
         _settings = settings;
     }
 
-    private readonly PowerBISettings _settings;
-
-    public async Task<PowerBIEmbedConfig> GetPowerBiEmbedConfig()
+    public async Task<PowerBIEmbedConfig> GetConfig()
     {
-        var accessToken = await GetPowerBIAccessToken(_settings);
+        var accessToken = await GetAccessToken(_settings);
         var tokenCredentials = new TokenCredentials(accessToken, "Bearer");
 
         using var client = new PowerBIClient(new Uri(_settings.ApiUrl), tokenCredentials);
@@ -43,7 +42,7 @@ public class PowerBiService
         return result;
     }
 
-    public async Task<string> GetPowerBIAccessToken(PowerBISettings powerBISettings)
+    private async Task<string> GetAccessToken(PowerBISettings powerBISettings)
     {
         using var client = new HttpClient();
 
